@@ -1,6 +1,7 @@
 from cloudant.client import Cloudant
 from cloudant.query import Query
-from flask import Flask, jsonify, request
+from flask_cors import CORS
+from flask import Flask, abort, jsonify, request
 import atexit
 
 # Add your Cloudant service credentials here
@@ -16,6 +17,9 @@ print('Databases:', client.all_dbs())
 db = client['reviews']
 
 app = Flask(__name__)
+
+# enable cors for all domains on all routes
+CORS(app, resources={r'/*': {'origins': '*'}})
 
 
 @app.route('/api/get_reviews', methods=['GET'])

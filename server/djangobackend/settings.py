@@ -29,6 +29,8 @@ APPEND_SLASH = True
 
 ALLOWED_HOSTS = ["localhost"]
 
+# Use BigAutoField for the default auto field.
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Application definition
 

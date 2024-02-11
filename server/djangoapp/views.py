@@ -1,20 +1,29 @@
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponse
 from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404, render, redirect
-# from .models import related models
-# from .restapis import related methods
-from django.contrib.auth import login, logout, authenticate
+from django.middleware.csrf import get_token
+from django.shortcuts import (
+    render,
+    redirect
+)
+from django.contrib.auth import (
+    login,
+    logout,
+    authenticate
+)
 from django.contrib import messages
 from datetime import datetime
 import logging
 import json
 
+from .restapis import (
+    get_dealers_from_cf,
+    get_dealer_reviews_from_cf,
+    post_request,
+)
+
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
-
-
-# Create your views here.
 
 
 # Create an `about` view to render a static about page
@@ -85,7 +94,9 @@ def registration_request(request):
         # If it is a new user
         if not user_exist:
             # Create user in auth_user table
-            user = User.objects.create_user(username=username, first_name=first_name, last_name=last_name,
+            user = User.objects.create_user(username=username,
+                                            first_name=first_name,
+                                            last_name=last_name,
                                             password=password)
             # Login the user and redirect to index
             login(request, user)
@@ -97,15 +108,55 @@ def registration_request(request):
 
 
 def get_dealerships(request):
-    context = {}
     if request.method == "GET":
-        return render(request, 'djangoapp/index.html', context)
+        url = "http://localhost:3000/dealerships/get"
+
+        # Get dealers from the URL
+        dealerships = get_dealers_from_cf(url)
+        # Concat all dealer's short name
+        dealer_names = ' '.join([dealer.short_name for dealer in dealerships])
+        # Return a list of dealer short name
+        return HttpResponse(dealer_names)
 
 
 # Create a `get_dealer_details` view to render the reviews of a dealer
-# def get_dealer_details(request, dealer_id):
-# ...
+def get_dealer_details(request, id):
+    if request.method == "GET":
+        url = "http://localhost:5000/api/get_reviews"
+        dealer_reviews = get_dealer_reviews_from_cf(url, id)
+
+        # return dealer details and reviews
+        return HttpResponse(dealer_reviews)
 
 # Create a `add_review` view to submit a review
-# def add_review(request, dealer_id):
-# ...
+
+
+def add_review(request):
+    if request.method == "POST":
+        csrf_token= get_token(request)
+
+        url = "http://localhost:5000/api/post_review"
+        review = {
+            "id": 1114,
+            "name": "Upkar Lidder",
+            "dealership": 15,
+            "review": "Great service!",
+            "purchase": False,
+            "another": "field",
+            "purchase_date": "02/16/2021",
+            "car_make": "Audi",
+            "car_model": "Car",
+            "car_year": 2021
+        }
+
+        headers = {
+            "X-CSRFToken": csrf_token
+        }
+
+        status = post_request(url, json_payload=review, headers=headers)
+        if status:
+            return HttpResponse("Review added successfully")
+        else:
+            return HttpResponse("Failed to add review")
+    else:
+        return HttpResponse("Failed to add review")
