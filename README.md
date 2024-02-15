@@ -38,3 +38,17 @@ The project is then divided into several smaller labs that give the detailed ins
 
 1. Add deployment artifacts to your application
 2. Deploy your application
+
+**Deploying the application**
+
+1. Create a deployment using the command
+
+   ```bash
+   kubectl apply -f deployment.yaml
+   ```
+
+2. Normally, a service would be added to the deployment, but in this case, port-forwarding is used to see the running application
+
+   ```bash
+   kubectl port-forward deployment.apps/dealership 8000:8000
+   ```
